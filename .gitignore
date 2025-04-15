@@ -5,3 +5,4 @@ __pycache__
 *.pdf
 *.html
 results/
+.venv

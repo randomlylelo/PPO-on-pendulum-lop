@@ -383,9 +383,9 @@ class PPO:
         reward_list = []
         print("Testing the policy...")
         for i in range(200):
-            mean = self.policy_net(torch.as_tensor(current_state))
+            mean = self.policy_net(torch.as_tensor(current_state).to(device))
             normal = MultivariateNormal(mean, self.std)
-            action = normal.sample().detach().numpy()
+            action = normal.sample().cpu().detach().numpy()
             next_state, reward, _, _, _ = env.step(action)  # Gymnasium returns (state, reward, terminated, truncated, info).
             env.render()
 
