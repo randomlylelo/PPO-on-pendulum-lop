@@ -1,4 +1,5 @@
 import gymnasium as gym
+from gymnasium.utils.save_video import save_video
 import a3_gym_env
 import torch
 import torch.nn as nn
@@ -86,6 +87,9 @@ parser.add_argument('--do_loss_of_plasticity', action='store_true',
 
 parser.add_argument('--use_spectral_norm', action='store_true',
                     help='Use spectral normalization')
+parser.add_argument('--load_file', type=str, default=None,
+                    help='Specify a full path to a specific .pt file to load policy network weights from (this takes precedence over folder_time)')
+
 
 args = parser.parse_args()
 # Save the arguments.
@@ -378,20 +382,34 @@ class PPO:
         plt.close(fig)
 
     def test(self):
-        self.policy_net.load_state_dict(torch.load(ABS_FOLDER_RESUlTS + POLICY_FOLDER + f'/policy_net.pt', weights_only=True))
+        if args.load_file:
+            policy_path = args.load_file
+        else:
+            policy_path = ABS_FOLDER_RESUlTS + POLICY_FOLDER + '/policy_net.pt'
+        # Load the network weights.
+        self.policy_net.load_state_dict(torch.load(policy_path, weights_only=True))
+
         current_state, _ = env.reset()  # Gymnasium returns (state, info)
         reward_list = []
         print("Testing the policy...")
+        frames = []
         for i in range(200):
             mean = self.policy_net(torch.as_tensor(current_state).to(device))
             normal = MultivariateNormal(mean, self.std)
             action = normal.sample().cpu().detach().numpy()
-            next_state, reward, _, _, _ = env.step(action)  # Gymnasium returns (state, reward, terminated, truncated, info).
-            env.render()
+            next_state, reward, terminated, truncated, _ = env.step(action)  # Gymnasium returns (state, reward, terminated, truncated, info).
 
             current_state = next_state.copy()
             reward_list.append(reward)
 
+            # env.render()
+            frames.append(env.render(mode="rgb_array"))
+        
+        save_video(
+            frames=frames,
+            video_folder="videos",
+            fps=env.metadata["render_fps"],
+        )
         avg_reward = sum(reward_list) / len(reward_list)
         print(f"Average reward: {avg_reward}")
         env.close()
