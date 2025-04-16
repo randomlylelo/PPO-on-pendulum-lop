@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import collections
+from cbp_linear import CBPLinear
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -14,9 +15,17 @@ class Net(nn.Module):
                 self.layer3 = nn.Linear(hidden_size, output_size)
                 self.act = activation
 
+                REPLACEMENT_RATE = 0
+                MATURITY_THRESHOLD = 100
+                INIT = 'default'
+                self.cbp1 = CBPLinear(in_layer=self.layer1, out_layer=self.layer2, replacement_rate=REPLACEMENT_RATE, maturity_threshold=MATURITY_THRESHOLD, init=INIT)
+                self.cbp2 = CBPLinear(in_layer=self.layer2, out_layer=self.layer3, replacement_rate=REPLACEMENT_RATE, maturity_threshold=MATURITY_THRESHOLD, init=INIT)
+
         def forward(self, x):
-                x = self.act(self.layer1(x))
-                x = self.act(self.layer2(x))
+                x = self.cbp1(self.act(self.layer1(x)))
+                x = self.cbp2(self.act(self.layer2(x)))
+                # x = self.act(self.layer1(x))
+                # x = self.act(self.layer2(x))
                 out = self.layer3(x)
 
                 return out
