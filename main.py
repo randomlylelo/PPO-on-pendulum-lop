@@ -11,6 +11,7 @@ import os
 from datetime import datetime
 import json
 from tqdm import tqdm
+from pend import PendulumEnv
 
 import modules
 from modules import Net, ReplayMemory, PolicyNet
@@ -123,7 +124,12 @@ if not os.path.exists(ABS_FOLDER_RESUlTS + CRITIC_FOLDER):
     os.makedirs(ABS_FOLDER_RESUlTS + CRITIC_FOLDER)
 
 # Create the custom environment.
-env = gym.make('Pendulum-v1-custom')
+gym.register(
+    id="lop/pend-v0",
+    entry_point=PendulumEnv,
+)
+
+env = gym.make('lop/pend-v0', target=np.pi / 8)
 env = env.unwrapped  # Get the unwrapped environment to access custom methods.
 
 # Hyperparameters.
@@ -258,14 +264,15 @@ class PPO:
                             # Change the environment.
                             if idx_iteration % PARAMS_ENV_LOP['CHANGE_ENV_INTERVAL'] == 0:
                                 print(f"{WARNING_EMOJI} Changing the environment.")
-                                if PARAMS_ENV_LOP['CHANGE_DAMPING']:
-                                    env.set_damping(b=np.random.uniform(PARAMS_ENV_LOP['DAMPING_LOWER_BOUND'], PARAMS_ENV_LOP['DAMPING_UPPER_BOUND']))
-                                if PARAMS_ENV_LOP['CHANGE_MASS']:
-                                    env.set_mass(m=np.random.uniform(PARAMS_ENV_LOP['MASS_LOWER_BOUND'], PARAMS_ENV_LOP['MASS_UPPER_BOUND']))
-                                if PARAMS_ENV_LOP['CHANGE_LENGTH']:
-                                    env.set_length(l=np.random.uniform(PARAMS_ENV_LOP['LENGTH_LOWER_BOUND'], PARAMS_ENV_LOP['LENGTH_UPPER_BOUND']))
-                                PARAMS_ENV_LOP['TIME_TO_CHANGE_ENV'] = idx_iteration + PARAMS_ENV_LOP['CHANGE_ENV_INTERVAL']
-                                time_to_change_env_list.append(PARAMS_ENV_LOP['TIME_TO_CHANGE_ENV'])
+                                # if PARAMS_ENV_LOP['CHANGE_DAMPING']:
+                                #     env.set_damping(b=np.random.uniform(PARAMS_ENV_LOP['DAMPING_LOWER_BOUND'], PARAMS_ENV_LOP['DAMPING_UPPER_BOUND']))
+                                # if PARAMS_ENV_LOP['CHANGE_MASS']:
+                                #     env.set_mass(m=np.random.uniform(PARAMS_ENV_LOP['MASS_LOWER_BOUND'], PARAMS_ENV_LOP['MASS_UPPER_BOUND']))
+                                # if PARAMS_ENV_LOP['CHANGE_LENGTH']:
+                                #     env.set_length(l=np.random.uniform(PARAMS_ENV_LOP['LENGTH_LOWER_BOUND'], PARAMS_ENV_LOP['LENGTH_UPPER_BOUND']))
+                                # PARAMS_ENV_LOP['TIME_TO_CHANGE_ENV'] = idx_iteration + PARAMS_ENV_LOP['CHANGE_ENV_INTERVAL']
+                                # time_to_change_env_list.append(PARAMS_ENV_LOP['TIME_TO_CHANGE_ENV'])
+                                env.set_target(- np.pi / 8)
 
                 self.generate_trajectory()
 
